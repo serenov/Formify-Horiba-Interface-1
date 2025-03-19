@@ -1,0 +1,30 @@
+{
+  "name": "formify-horiba-interface",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder",
+    "start": "npx electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.8.3",
+    "bootstrap": "^5.3.3",
+    "chokidar": "^4.0.3",
+    "electron-store": "^10.0.1",
+    "fs-extra": "^11.3.0",
+    "ftp-srv": "^2.19.6"
+  },
+  "build": {
+    "appId": "com.yourname.astmftpmonitor",
+    "productName": "ASTM FTP Monitor"
+  },
+  "devDependencies": {
+    "electron": "^35.0.2",
+    "electron-builder": "^25.1.8"
+  }
+}

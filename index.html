@@ -1,0 +1,150 @@
+// index.html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ASTM FTP Parser</title>
+  <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">ASTM FTP Parser</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-section="home">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-section="ftp-config">FTP Configuration</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-section="backend-config">Backend Server Configuration</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <div id="home-section" class="content-section">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>ASTM Files Monitoring</h5>
+          <div>
+            <button id="start-monitoring-btn" class="btn btn-success">Start Monitoring</button>
+            <button id="stop-monitoring-btn" class="btn btn-danger">Stop Monitoring</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="status-message" class="alert alert-info">
+            Monitoring not started. Configure FTP and backend server, then start monitoring.
+          </div>
+          
+          <div id="astm-data-container" class="d-none">
+            <div class="alert alert-success">
+              New ASTM file detected! The parsed data is shown below.
+              <div>
+                <strong>File:</strong> <span id="current-file-path"></span>
+              </div>
+            </div>
+            
+            <h5>Header Information</h5>
+            <div id="header-info" class="mb-3"></div>
+            
+            <h5>Patient Information</h5>
+            <div id="patient-info" class="mb-3"></div>
+            
+            <h5>Order Information</h5>
+            <div id="order-info" class="mb-3"></div>
+            
+            <h5>Results</h5>
+            <div class="table-responsive">
+              <table id="results-table" class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Seq #</th>
+                    <th>Test ID</th>
+                    <th>Value</th>
+                    <th>Units</th>
+                    <th>Reference</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+              </table>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+              <button id="discard-btn" class="btn btn-secondary me-2">Discard</button>
+              <button id="submit-btn" class="btn btn-primary">Submit to Backend</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ftp-config-section" class="content-section d-none">
+      <div class="card">
+        <div class="card-header">
+          <h5>FTP Server Configuration</h5>
+        </div>
+        <div class="card-body">
+          <form id="ftp-config-form">
+            <div class="mb-3">
+              <label for="ftp-path" class="form-label">FTP Directory Path</label>
+              <input type="text" class="form-control" id="ftp-path" required>
+              <div class="form-text">The directory path where FTP files will be stored and monitored</div>
+            </div>
+            <div class="mb-3">
+              <label for="ftp-port" class="form-label">FTP Port</label>
+              <input type="number" class="form-control" id="ftp-port" value="21" required>
+            </div>
+            <div class="mb-3">
+              <label for="ftp-user" class="form-label">FTP Username</label>
+              <input type="text" class="form-control" id="ftp-user" required>
+            </div>
+            <div class="mb-3">
+              <label for="ftp-password" class="form-label">FTP Password</label>
+              <input type="password" class="form-control" id="ftp-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Configuration</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="backend-config-section" class="content-section d-none">
+      <div class="card">
+        <div class="card-header">
+          <h5>Backend Server Configuration</h5>
+        </div>
+        <div class="card-body">
+          <form id="backend-config-form">
+            <div class="mb-3">
+              <label for="backend-url" class="form-label">REST API URL</label>
+              <input type="url" class="form-control" id="backend-url" required>
+              <div class="form-text">Full URL with endpoint where data will be sent</div>
+            </div>
+            <div class="mb-3">
+              <label for="backend-username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="backend-username" required>
+            </div>
+            <div class="mb-3">
+              <label for="backend-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="backend-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Configuration</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
