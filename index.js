@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, nativeImage } = require("electron");
 const path = require("path");
 const { startFtpServer, stopFtpServer } = require("./src/ftp-service");
 const { startFileWatcher, stopFileWatcher } = require("./src/file-watcher");
@@ -15,6 +15,8 @@ let ftpServer;
 let watcher;
 
 function createWindow() {
+  const iconPath = path.join(__dirname, 'formify.png');
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -23,7 +25,11 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+    icon: iconPath, 
   });
+
+
+  Menu.setApplicationMenu(null)
 
   mainWindow.loadFile("index.html");
   mainWindow.on("closed", () => {

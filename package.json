@@ -21,8 +21,9 @@
     "ftp-srv": "^2.19.6"
   },
   "build": {
-    "appId": "com.yourname.astmftpmonitor",
-    "productName": "ASTM FTP Monitor"
+    "appId": "com.bhanu.formifyHoribaIntegrator",
+    "productName": "Horiba Integrator",
+    "win": { "icon": "icon.ico" }
   },
   "devDependencies": {
     "electron": "^35.0.2",
