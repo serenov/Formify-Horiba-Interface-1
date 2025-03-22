@@ -103,80 +103,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   stopMonitoringBtn.disabled = true;
   
   // Handle new ASTM files
-  let currentAstmData = null;
+  let currentSampleId = null;
+  let currentResults = null;
   let currentFilePath = null;
   
   window.electronAPI.onNewAstmFile((data) => {
-    const { filePath, parsedData } = data;
-    currentAstmData = parsedData;
+    try {
+
+    const { sampleId, parsedData: { results, filePath } } = data;
+
+    currentSampleId = sampleId;
+    currentResults = results;
     currentFilePath = filePath;
-    
-    // Show the data container
-    document.getElementById('astm-data-container').classList.remove('d-none');
-    document.getElementById('current-file-path').textContent = filePath;
-    
-    // Display header info
-    const headerInfo = document.getElementById('header-info');
-    headerInfo.innerHTML = `
-      <div>Sender: ${parsedData.header.senderId}</div>
-      <div>Receiver: ${parsedData.header.receiverId}</div>
-      <div>Processing ID: ${parsedData.header.processingId}</div>
-    `;
-    
-    // Display patient info
-    const patientInfo = document.getElementById('patient-info');
-    patientInfo.innerHTML = '';
-    
-    if (parsedData.patients.length > 0) {
-      const patient = parsedData.patients[0];
-      patientInfo.innerHTML = `
-        <div>ID: ${patient.id}</div>
-        <div>Name: ${patient.name}</div>
-        <div>DOB: ${patient.dateOfBirth}</div>
-        <div>Sex: ${patient.sex}</div>
-      `;
-    } else {
-      patientInfo.innerHTML = '<div class="text-muted">No patient information found</div>';
-    }
-    
-    // Display order info
-    const orderInfo = document.getElementById('order-info');
-    orderInfo.innerHTML = '';
-    
-    if (parsedData.orders.length > 0) {
-      const order = parsedData.orders[0];
-      orderInfo.innerHTML = `
-        <div>Order ID: ${order.id}</div>
-        <div>Specimen ID: ${order.specimenId}</div>
-        <div>Instrument: ${order.instrumentId}</div>
-        <div>Requested: ${order.requestedDateTime}</div>
-      `;
-    } else {
-      orderInfo.innerHTML = '<div class="text-muted">No order information found</div>';
-    }
-    
-    // Display results
-    const resultsBody = document.getElementById('results-body');
-    resultsBody.innerHTML = '';
-    
-    if (parsedData.results.length > 0) {
-      parsedData.results.forEach(result => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${result.sequenceNumber}</td>
-          <td>${result.universalTestId}</td>
-          <td>${result.value}</td>
-          <td>${result.units}</td>
-          <td>${result.referenceRanges}</td>
-          <td>${result.resultStatus}</td>
-        `;
-        resultsBody.appendChild(row);
-      });
-    } else {
-      const row = document.createElement('tr');
-      row.innerHTML = '<td colspan="6" class="text-center">No results found</td>';
-      resultsBody.appendChild(row);
-    }
+
+    document.getElementById("astm-data-container").classList.remove("d-none");
+    document.getElementById("current-file-path").textContent = filePath;
+
+    const resultHeader = document.getElementById("result-header");
+    const resultBody = document.getElementById("result-data");
+
+    resultHeader.innerHTML = "";
+    resultBody.innerHTML = "";
+
+    Object.entries(results).forEach(([tableHeading, value]) => {
+      const columnHeaderDom = document.createElement("th");
+
+      columnHeaderDom.innerHTML = tableHeading;
+
+      resultHeader.appendChild(columnHeaderDom);
+
+      const columnValueDom = document.createElement("td");
+
+      columnValueDom.innerHTML = value;
+
+      resultBody.appendChild(columnValueDom);
+    });
+  }
+  catch (error) { console.log(error) }
   });
   
   window.electronAPI.onAstmParseError((data) => {
@@ -184,10 +147,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     showAlert(`Error parsing file ${filePath}: ${error}`, 'danger');
   });
   
-  // Submit button
   const submitBtn = document.getElementById('submit-btn');
+
   submitBtn.addEventListener('click', async () => {
-    if (!currentAstmData || !currentFilePath) {
+    if (!currentSampleId || !currentResults || !currentFilePath) {
       return;
     }
     
@@ -196,7 +159,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const result = await window.electronAPI.submitAstmData({
       filePath: currentFilePath,
-      parsedData: currentAstmData
+      sampleId: currentSampleId,
+      parsedData: currentResults, 
     });
     
     submitBtn.disabled = false;
@@ -210,8 +174,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   
-  // Discard button
   const discardBtn = document.getElementById('discard-btn');
+
   discardBtn.addEventListener('click', async () => {
     if (!currentFilePath) {
       return;
@@ -229,7 +193,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   
-  // Helper functions
   async function loadFtpConfig() {
     const config = await window.electronAPI.getFtpConfig();
     document.getElementById('ftp-path').value = config.path || '';
@@ -261,22 +224,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
       alertDiv.classList.remove('show');
       setTimeout(() => alertDiv.remove(), 300);
-    }, 5000);
+    }, 2000);
   }
   
   function resetAstmDisplay() {
-    // Hide the ASTM data container
     document.getElementById('astm-data-container').classList.add('d-none');
     
-    // Clear current data
-    currentAstmData = null;
     currentFilePath = null;
+    currentResults = null;
+    currentSampleId = null;
     
-    // Clear displayed data
+    document.getElementById("result-header").innerHTML = '';
+    document.getElementById("result-data").innerHTML = '';
     document.getElementById('current-file-path').textContent = '';
-    document.getElementById('header-info').innerHTML = '';
-    document.getElementById('patient-info').innerHTML = '';
-    document.getElementById('order-info').innerHTML = '';
-    document.getElementById('results-body').innerHTML = '';
   }
 });

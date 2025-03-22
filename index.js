@@ -28,6 +28,8 @@ function createWindow() {
     icon: iconPath, 
   });
 
+  mainWindow.webContents.openDevTools();
+
 
   Menu.setApplicationMenu(null)
 

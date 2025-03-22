@@ -52,29 +52,15 @@
               </div>
             </div>
             
-            <h5>Header Information</h5>
-            <div id="header-info" class="mb-3"></div>
-            
-            <h5>Patient Information</h5>
-            <div id="patient-info" class="mb-3"></div>
-            
-            <h5>Order Information</h5>
-            <div id="order-info" class="mb-3"></div>
-            
             <h5>Results</h5>
             <div class="table-responsive">
               <table id="results-table" class="table table-striped">
                 <thead>
-                  <tr>
-                    <th>Seq #</th>
-                    <th>Test ID</th>
-                    <th>Value</th>
-                    <th>Units</th>
-                    <th>Reference</th>
-                    <th>Status</th>
-                  </tr>
+                  <tr id="result-header"></tr>
                 </thead>
-                <tbody id="results-body"></tbody>
+                <tbody id="results-body">
+                  <tr id="result-data"></tr>
+                </tbody>
               </table>
             </div>
             
