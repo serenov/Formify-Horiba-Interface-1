@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.electronAPI.onNewAstmFile((data) => {
     try {
 
-    const { sampleId, parsedData: { results, filePath } } = data;
+    const { parsedData: { results, sampleId }, filePath } = data;
 
     currentSampleId = sampleId;
     currentResults = results;
