@@ -3,7 +3,7 @@ const path = require("path");
 const { startFtpServer, stopFtpServer } = require("./src/ftp-service");
 const { startFileWatcher, stopFileWatcher } = require("./src/file-watcher");
 const { parseAstmFile } = require("./src/astm-parser");
-const { sendDataToBackend } = require("./src/api-service");
+const { sendDataToBackend, fetchToken } = require("./src/api-service");
 const fs = require("fs");
 
 const Store = require('electron-store').default;
@@ -82,6 +82,11 @@ ipcMain.handle("save-ftp-config", async (event, config) => {
 
 ipcMain.handle("save-backend-config", async (event, config) => {
   store.set("backendConfig", config);
+
+  const { token } = await fetchToken(config);
+
+  store.set("authToken", token);
+
   return { success: true };
 });
 
@@ -118,23 +123,36 @@ ipcMain.handle("stop-file-watching", async () => {
   return { success: true };
 });
 
-ipcMain.handle("submit-astm-data", async (event, { filePath, parsedData }) => {
+ipcMain.handle("submit-astm-data", async (event, { sampleId, filePath, parsedData }) => {
   try {
-    const backendConfig = store.get("backendConfig");
-    if (!backendConfig || !backendConfig.url) {
+    const token = store.get("authToken");
+
+    const config = store.get("backendConfig");
+
+    if (!token) {
+
       return { success: false, error: "Backend not configured" };
     }
 
-    const result = await sendDataToBackend(parsedData, backendConfig);
+    const result = await sendDataToBackend(
+      {
+        horibaParams: parsedData,
+        individualUuid: sampleId,
+      },
+      config,
+      token
+    );
 
     if (result.success) {
-      // Delete the file on successful submission
       fs.unlinkSync(filePath);
+
       return { success: true };
     } else {
+
       return result;
     }
   } catch (error) {
+
     return { success: false, error: error.message };
   }
 });

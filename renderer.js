@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // const stopMonitoringBtn = document.getElementById('stop-monitoring-btn');
   // const statusMessage = document.getElementById('status-message');
   
-  const result = await window.electronAPI.startFileWatching();
+  await window.electronAPI.startFileWatching();
 
   // startMonitoringBtn.addEventListener('click', async () => {
   //   if (result.success) {
@@ -103,13 +103,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   // stopMonitoringBtn.disabled = true;
   
   // Handle new ASTM files
+  const horibaResultsDictionary = {};
+  
   let currentSampleId = null;
   let currentResults = null;
-
   let currentFilePath = null;
+  let rowCount = 0;
 
 
   const resultHeader = document.getElementById("result-header");
+
+  const checkboxHeader = document.createElement("th");
+  checkboxHeader.innerHTML = '<input type="checkbox" id="select-all-checkbox" />';
+  resultHeader.appendChild(checkboxHeader);
+
 
   [
     "ID",
@@ -141,33 +148,51 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   window.electronAPI.onNewAstmFile((data) => {
     try {
+      const {
+        parsedData: { results, sampleId },
+        filePath,
+      } = data;
 
-    const { parsedData: { results, sampleId }, filePath } = data;
+      horibaResultsDictionary[rowCount] = {
+        sampleId,
+        results,
+        filePath,
+      };
 
-    currentSampleId = sampleId;
-    currentResults = results;
-    currentFilePath = filePath;
+      document.getElementById("astm-data-container").classList.remove("d-none");
+      document.getElementById("current-file-path").textContent = filePath;
 
-    document.getElementById("astm-data-container").classList.remove("d-none");
-    document.getElementById("current-file-path").textContent = filePath;
+      const resultBody = document.getElementById("results-body");
 
-    const resultBody = document.getElementById("results-body");
+      const resultRow = document.createElement("tr");
+      resultRow.dataset.index = rowCount;
 
-    const resultRow = document.createElement("tr");
+      const checkboxCell = document.createElement("td");
 
-    Object.entries(results).forEach(([, value]) => {
+      checkboxCell.innerHTML = `<input type="checkbox" class="row-checkbox" data-index="${rowCount++}" />`;
 
-      const columnValueDom = document.createElement("td");
+      resultRow.appendChild(checkboxCell);
 
-      columnValueDom.innerHTML = value;
+      Object.entries(results).forEach(([, value]) => {
+        const columnValueDom = document.createElement("td");
 
-      resultRow.appendChild(columnValueDom);
-    });
+        columnValueDom.innerHTML = value;
 
-    resultBody.appendChild(resultRow);
-  }
-  catch (error) { console.log(error) }
+        resultRow.appendChild(columnValueDom);
+      });
+
+      resultBody.appendChild(resultRow);
+    } catch (error) {
+      console.log(error);
+    }
   });
+
+  document.getElementById("select-all-checkbox").addEventListener("change", function() {
+    const isChecked = this.checked;
+    document.querySelectorAll(".row-checkbox").forEach(checkbox => {
+      checkbox.checked = isChecked;
+    });
+  })
   
   window.electronAPI.onAstmParseError((data) => {
     const { filePath, error } = data;
@@ -177,27 +202,54 @@ document.addEventListener('DOMContentLoaded', async () => {
   const submitBtn = document.getElementById('submit-btn');
 
   submitBtn.addEventListener('click', async () => {
-    if (!currentSampleId || !currentResults || !currentFilePath) {
-      return;
-    }
-    
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
-    
-    const result = await window.electronAPI.submitAstmData({
-      filePath: currentFilePath,
-      sampleId: currentSampleId,
-      parsedData: currentResults, 
-    });
-    
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit to Backend';
+ 
+    const selectedCheckboxes = document.querySelectorAll(".row-checkbox:checked");
     
-    if (result.success) {
-      showAlert('Data successfully submitted and file deleted', 'success');
-      resetAstmDisplay();
+    if (selectedCheckboxes.length === 0) {
+      showAlert("Warning", "Please select at least one row to submit", "warning");
+      return;
+    }
+
+    const resultsPromises = Array.from(selectedCheckboxes).map(async (checkbox) => {
+      const index = parseInt(checkbox.dataset.index);
+
+        if (horibaResultsDictionary[index]) {
+            const { sampleId, results, filePath } = horibaResultsDictionary[index];
+
+            const result = await window.electronAPI.submitAstmData({
+              filePath,
+              sampleId,
+              parsedData: results,
+            });
+
+            if (result.success) {
+              delete horibaResultsDictionary[index];
+              checkbox.closest("tr")?.remove();
+            }
+
+            return { success: result.success, sampleId, error: result.error };
+        }
+
+      return { success: false, sampleId: "NA", error: "No data found" };
+    });
+   
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    const results = await Promise.all(resultsPromises);
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit to Backend';
+
+
+    const failedRows = results.filter((r) => !r.success)
+
+    if (failedRows?.length > 0) {
+      showAlert(`Failed to submit data: ${failedRows.map(failedRow => `${failedRow.sampleId}: ${failedRow.error}`).join("\n")}`, 'danger');
     } else {
-      showAlert(`Failed to submit data: ${result.error}`, 'danger');
+      showAlert("Data successfully submitted and file deleted", "success");
     }
   });
   
