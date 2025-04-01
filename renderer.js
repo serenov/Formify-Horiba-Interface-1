@@ -71,41 +71,73 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   
   // Monitoring Controls
-  const startMonitoringBtn = document.getElementById('start-monitoring-btn');
-  const stopMonitoringBtn = document.getElementById('stop-monitoring-btn');
-  const statusMessage = document.getElementById('status-message');
+  // const startMonitoringBtn = document.getElementById('start-monitoring-btn');
+  // const stopMonitoringBtn = document.getElementById('stop-monitoring-btn');
+  // const statusMessage = document.getElementById('status-message');
   
-  startMonitoringBtn.addEventListener('click', async () => {
-    const result = await window.electronAPI.startFileWatching();
+  const result = await window.electronAPI.startFileWatching();
+
+  // startMonitoringBtn.addEventListener('click', async () => {
+  //   if (result.success) {
+  //     statusMessage.className = 'alert alert-success';
+  //     statusMessage.textContent = 'Monitoring active. Waiting for ASTM files...';
+  //     startMonitoringBtn.disabled = true;
+  //     stopMonitoringBtn.disabled = false;
+  //   } else {
+  //     showAlert('Failed to start monitoring: ' + result.error, 'danger');
+  //   }
+  // });
+  
+  // stopMonitoringBtn.addEventListener('click', async () => {
+  //   const result = await window.electronAPI.stopFileWatching();
     
-    if (result.success) {
-      statusMessage.className = 'alert alert-success';
-      statusMessage.textContent = 'Monitoring active. Waiting for ASTM files...';
-      startMonitoringBtn.disabled = true;
-      stopMonitoringBtn.disabled = false;
-    } else {
-      showAlert('Failed to start monitoring: ' + result.error, 'danger');
-    }
-  });
+  //   if (result.success) {
+  //     statusMessage.className = 'alert alert-info';
+  //     statusMessage.textContent = 'Monitoring stopped.';
+  //     startMonitoringBtn.disabled = false;
+  //     stopMonitoringBtn.disabled = true;
+  //   }
+  // });
   
-  stopMonitoringBtn.addEventListener('click', async () => {
-    const result = await window.electronAPI.stopFileWatching();
-    
-    if (result.success) {
-      statusMessage.className = 'alert alert-info';
-      statusMessage.textContent = 'Monitoring stopped.';
-      startMonitoringBtn.disabled = false;
-      stopMonitoringBtn.disabled = true;
-    }
-  });
-  
-  // Initially disable stop button
-  stopMonitoringBtn.disabled = true;
+  // // Initially disable stop button
+  // stopMonitoringBtn.disabled = true;
   
   // Handle new ASTM files
   let currentSampleId = null;
   let currentResults = null;
+
   let currentFilePath = null;
+
+
+  const resultHeader = document.getElementById("result-header");
+
+  [
+    "ID",
+    "TIMESTAMP",
+    "MPV",
+    "PDW",
+    "PLT",
+    "THT",
+    "HCT",
+    "HGB",
+    "MCH",
+    "MCHC",
+    "MCV",
+    "RBC",
+    "RDW",
+    "RDW-SD",
+    "GRA#",
+    "GRA%",
+    "LYM#",
+    "LYM%",
+    "MON#",
+    "MON%",
+    "WBC",
+  ].map((columnName) => {
+    const columnHeaderDom = document.createElement("th");
+    columnHeaderDom.innerText = columnName;
+    resultHeader.appendChild(columnHeaderDom);
+  });
   
   window.electronAPI.onNewAstmFile((data) => {
     try {
@@ -119,25 +151,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById("astm-data-container").classList.remove("d-none");
     document.getElementById("current-file-path").textContent = filePath;
 
-    const resultHeader = document.getElementById("result-header");
-    const resultBody = document.getElementById("result-data");
+    const resultBody = document.getElementById("results-body");
 
-    resultHeader.innerHTML = "";
-    resultBody.innerHTML = "";
+    const resultRow = document.createElement("tr");
 
-    Object.entries(results).forEach(([tableHeading, value]) => {
-      const columnHeaderDom = document.createElement("th");
-
-      columnHeaderDom.innerHTML = tableHeading;
-
-      resultHeader.appendChild(columnHeaderDom);
+    Object.entries(results).forEach(([, value]) => {
 
       const columnValueDom = document.createElement("td");
 
       columnValueDom.innerHTML = value;
 
-      resultBody.appendChild(columnValueDom);
+      resultRow.appendChild(columnValueDom);
     });
+
+    resultBody.appendChild(resultRow);
   }
   catch (error) { console.log(error) }
   });

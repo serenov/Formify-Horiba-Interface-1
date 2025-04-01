@@ -1,5 +1,6 @@
 const fs = require("fs");
 const { promisify } = require("util");
+const timestampToDate = require("./utils");
 
 const readFileAsync = promisify(fs.readFile);
 
@@ -22,9 +23,10 @@ async function parseAstmFile(filePath) {
       for (const line of lines) {
         if (line.includes("O|")) {
           const orderParts = line.split("|");
-          if (orderParts.length > 2) {
+          if (orderParts.length > 7) {
             output.sampleId = orderParts[2];
-            output.results.sampleId = orderParts[2];
+            output.results.ID = orderParts[2];
+            output.results.TIMESTAMP = timestampToDate(orderParts[7]);
           }
           break;
         }
@@ -36,7 +38,7 @@ async function parseAstmFile(filePath) {
 
           if (parts.length > 3) {
             const testIdField = parts[2];
-            const result = parts[3].replace(",", "."); // Replace comma with dot for decimal
+            const result = parts[3].replace(",", "."); 
 
             const cleanTestId = testIdField
               .replace(/\^\^\^/, "")

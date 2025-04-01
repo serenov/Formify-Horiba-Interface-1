@@ -28,10 +28,11 @@ function createWindow() {
     icon: iconPath, 
   });
 
-  mainWindow.webContents.openDevTools();
 
 
   Menu.setApplicationMenu(null)
+
+  mainWindow.webContents.openDevTools();
 
   mainWindow.loadFile("index.html");
   mainWindow.on("closed", () => {
@@ -40,6 +41,7 @@ function createWindow() {
 }
 
 app.on("ready", createWindow);
+
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

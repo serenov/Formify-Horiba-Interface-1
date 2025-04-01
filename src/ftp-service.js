@@ -8,7 +8,7 @@ async function startFtpServer(config) {
     fs.mkdirSync(config.path, { recursive: true });
   }
 
-  const ftpServer = new FtpSrv(`ftp://0.0.0.0:${config.port || 21}`);
+  const ftpServer = new FtpSrv(`ftp://192.168.1.1:${config.port || 21}`);
 
   ftpServer.on("login", ({ username, password }, resolve, reject) => {
     if (username === config.user && password === config.password) {
