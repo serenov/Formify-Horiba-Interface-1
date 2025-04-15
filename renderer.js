@@ -105,9 +105,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Handle new ASTM files
   const horibaResultsDictionary = {};
   
-  let currentSampleId = null;
-  let currentResults = null;
-  let currentFilePath = null;
   let rowCount = 0;
 
 
@@ -187,7 +184,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  document.getElementById("select-all-checkbox").addEventListener("change", function() {
+  const selectAllCheckbox = document.getElementById("select-all-checkbox");
+
+  selectAllCheckbox.addEventListener("change", function() {
     const isChecked = this.checked;
     document.querySelectorAll(".row-checkbox").forEach(checkbox => {
       checkbox.checked = isChecked;
@@ -243,6 +242,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit to Backend';
 
+    selectAllCheckbox.checked = false;
+
 
     const failedRows = results.filter((r) => !r.success)
 
@@ -256,18 +257,53 @@ document.addEventListener('DOMContentLoaded', async () => {
   const discardBtn = document.getElementById('discard-btn');
 
   discardBtn.addEventListener('click', async () => {
-    if (!currentFilePath) {
-      return;
-    }
-    
     if (confirm('Are you sure you want to discard this file?')) {
-      const result = await window.electronAPI.discardAstmFile(currentFilePath);
-      
-      if (result.success) {
-        showAlert('File discarded successfully', 'info');
-        resetAstmDisplay();
+
+      const selectedCheckboxes = document.querySelectorAll(
+        ".row-checkbox:checked"
+      );
+
+      const resultsPromises = Array.from(selectedCheckboxes).map(
+        async (checkbox) => {
+          const index = parseInt(checkbox.dataset.index);
+
+          if (horibaResultsDictionary[index]) {
+            const { sampleId, _, filePath } = horibaResultsDictionary[index];
+
+            const result = await window.electronAPI.discardAstmFile(filePath);
+
+            if (result.success) {
+              delete horibaResultsDictionary[index];
+              checkbox.closest("tr")?.remove();
+            }
+
+            return { success: result.success, sampleId, error: result.error };
+          }
+
+          return { success: false, sampleId: "NA", error: "No data found" };
+        }
+      );
+
+      discardBtn.disabled = true;
+      discardBtn.textContent = "Discarding...";
+
+      const results = await Promise.all(resultsPromises);
+
+      selectAllCheckbox.checked = false;
+      discardBtn.disabled = false;
+      discardBtn.textContent = "Discard";
+
+      const failedRows = results.filter((r) => !r.success);
+
+      if (failedRows?.length > 0) {
+        showAlert(
+          `Failed to discard data: ${failedRows
+            .map((failedRow) => `${failedRow.sampleId}: ${failedRow.error}`)
+            .join("\n")}`,
+          "danger"
+        );
       } else {
-        showAlert(`Failed to discard file: ${result.error}`, 'danger');
+        showAlert("Data successfully discarded", "success");
       }
     }
   });
@@ -308,11 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   function resetAstmDisplay() {
     document.getElementById('astm-data-container').classList.add('d-none');
-    
-    currentFilePath = null;
-    currentResults = null;
-    currentSampleId = null;
-    
+   
     document.getElementById("result-header").innerHTML = '';
     document.getElementById("result-data").innerHTML = '';
     document.getElementById('current-file-path').textContent = '';
