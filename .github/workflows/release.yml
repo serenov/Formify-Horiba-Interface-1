@@ -28,9 +28,10 @@ jobs:
       - name: Build Electron app for Windows
         run: npm run build:windows  # Ensure you have a build:windows script in your package.json
 
-      # Step 5: Publish the Windows app (optional - push the build to a release or artifact storage)
+      # Step 5: Upload the Windows build artifact
       - name: Upload Windows Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: electron-windows-build
+          name: electron-windows-build-${{ github.ref_name }}
           path: ./dist/electron/windows  # Path where the Windows build is located
+          include-hidden-files: true
