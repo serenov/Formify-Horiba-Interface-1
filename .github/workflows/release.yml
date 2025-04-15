@@ -1,37 +1,47 @@
-name: Build Electron Windows App
+name: Build & Release Electron App
 
 on:
   push:
     tags:
-      - '*'  # Trigger this workflow for any new tag
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+
+permissions:
+  contents: write  # Required for creating releases
 
 jobs:
   build:
-    runs-on: windows-latest  # Runs on a Windows runner
+    runs-on: windows-latest
 
     steps:
-      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Adjust to the version your project uses
+          node-version: '16'
 
-      # Step 3: Install dependencies
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm ci
 
-      # Step 4: Build the Electron app for Windows
-      - name: Build Electron app for Windows
-        run: npm run build:windows  # Ensure you have a build:windows script in your package.json
+      - name: Build Electron app
+        run: |
+          npm run build
 
-      # Step 5: Upload the Windows build artifact
-      - name: Upload Windows Build Artifact
+      - name: Build Windows installer
+        run: |
+          npm run release -- --win --x64
+
+      - name: Upload Windows installer as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: electron-windows-build-${{ github.ref_name }}
-          path: ./dist/electron/windows  # Path where the Windows build is located
-          include-hidden-files: true
+          name: windows-installer
+          path: dist/*.exe
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
