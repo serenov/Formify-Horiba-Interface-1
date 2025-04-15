@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "electron-builder",
-    "build:windows": "electron-builder --win --x64",
+    "build:windows": "electron-builder --win --x64 --publish never",
     "start": "npx electron ."
   },
   "keywords": [],
