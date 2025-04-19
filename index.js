@@ -32,8 +32,6 @@ function createWindow() {
 
   Menu.setApplicationMenu(null)
 
-  mainWindow.webContents.openDevTools();
-
   mainWindow.loadFile("index.html");
   mainWindow.on("closed", () => {
     stopServices();
